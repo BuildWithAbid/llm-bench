@@ -22,6 +22,14 @@
     "gemini",
     "groq"
   ],
+  "homepage": "https://github.com/BuildWithAbid/llm-bench",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BuildWithAbid/llm-bench.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BuildWithAbid/llm-bench/issues"
+  },
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

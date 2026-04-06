@@ -135,7 +135,7 @@ npm install -g llm-bench
 ### Install from source
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/BuildWithAbid/llm-bench.git
 cd llm-bench
 npm install
 npm run build
