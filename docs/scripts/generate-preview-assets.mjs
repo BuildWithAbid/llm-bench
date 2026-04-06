@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -8,8 +8,11 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "..", "..");
 const assetsDir = join(repoRoot, "docs", "assets");
 const generatedDir = join(assetsDir, "generated");
+const framesDir = join(generatedDir, "frames");
+const manifestPath = join(generatedDir, "animation-manifest.json");
 
 mkdirSync(generatedDir, { recursive: true });
+mkdirSync(framesDir, { recursive: true });
 
 function run(command, args, options = {}) {
   const isWindowsCmd =
@@ -81,40 +84,126 @@ function getChromePath() {
 }
 
 function toFileUrl(path) {
-  const normalized = path.replace(/\\/g, "/");
-  return `file:///${normalized}`;
+  return pathToFileURL(path).href;
 }
 
 function screenshot(browserPath, sourcePath, targetPath, width, height) {
   run(browserPath, [
     "--headless",
     "--disable-gpu",
+    "--hide-scrollbars",
     `--window-size=${width},${height}`,
     `--screenshot=${targetPath}`,
-    "--hide-scrollbars",
     toFileUrl(sourcePath),
   ]);
 }
 
+function buildAnimationFrames() {
+  return [
+    {
+      key: "frame-1",
+      headline: "Racing 4 models...",
+      rows: demoStates.map((state) => ({ ...state, status: "waiting", tokensReceived: 0, elapsedMs: 0, costUsd: 0, error: undefined })),
+      showScores: false,
+      showSaved: false,
+      duration: 500,
+    },
+    {
+      key: "frame-2",
+      headline: "Racing 4 models...",
+      rows: [
+        { ...demoStates[0], status: "streaming", tokensReceived: 68, elapsedMs: 700, costUsd: 0.0013 },
+        { ...demoStates[1], status: "waiting", tokensReceived: 0, elapsedMs: 0, costUsd: 0, error: undefined },
+        { ...demoStates[2], status: "streaming", tokensReceived: 81, elapsedMs: 500, costUsd: 0.0002 },
+        { ...demoStates[3], status: "waiting", tokensReceived: 0, elapsedMs: 0, costUsd: 0, error: undefined },
+      ],
+      showScores: false,
+      showSaved: false,
+      duration: 650,
+    },
+    {
+      key: "frame-3",
+      headline: "Racing 4 models...",
+      rows: [
+        { ...demoStates[0] },
+        { ...demoStates[1], status: "streaming", tokensReceived: 140, elapsedMs: 1900, costUsd: 0.0042 },
+        { ...demoStates[2] },
+        { ...demoStates[3] },
+      ],
+      showScores: false,
+      showSaved: false,
+      duration: 700,
+    },
+    {
+      key: "frame-4",
+      headline: "Race complete",
+      rows: demoStates,
+      showScores: true,
+      showSaved: false,
+      duration: 900,
+    },
+    {
+      key: "frame-5",
+      headline: "Race complete",
+      rows: demoStates,
+      showScores: true,
+      showSaved: true,
+      duration: 1400,
+    },
+  ];
+}
+
 run(process.execPath, getTscArgs());
 
+const { generateCards } = await import(
+  pathToFileURL(join(repoRoot, "dist", "card.js")).href
+);
+
+const resultBasePath = join(generatedDir, "demo-result-card");
+const resultHtml = `${resultBasePath}.html`;
 const terminalPng = join(assetsDir, "terminal-race-preview.png");
-const resultHtml = join(generatedDir, "demo-result-card.html");
 const resultPng = join(assetsDir, "result-card-preview.png");
-const terminalHtml = join(generatedDir, "terminal-preview.html");
+const terminalGif = join(assetsDir, "terminal-race-demo.gif");
 
-const { generateCards } = await import(pathToFileURL(join(repoRoot, "dist", "card.js")).href);
-
-await generateCards(demoPrompt, demoResults, join(generatedDir, "demo-result-card"));
-writeFileSync(terminalHtml, buildTerminalPreviewHtml(), "utf-8");
+await generateCards(demoPrompt, demoResults, resultBasePath);
 
 const browserPath = getChromePath();
-screenshot(browserPath, terminalHtml, terminalPng, 1440, 980);
-screenshot(browserPath, resultHtml, resultPng, 1280, 1100);
+const animationFrames = buildAnimationFrames();
+const frameManifest = {
+  output: terminalGif,
+  max_width: 1100,
+  frames: [],
+};
 
-function buildTerminalPreviewHtml() {
+for (const frame of animationFrames) {
+  const htmlPath = join(framesDir, `${frame.key}.html`);
+  const pngPath = join(framesDir, `${frame.key}.png`);
+
+  writeFileSync(
+    htmlPath,
+    buildTerminalPreviewHtml({
+      headline: frame.headline,
+      rows: frame.rows,
+      showScores: frame.showScores,
+      showSaved: frame.showSaved,
+    }),
+    "utf-8",
+  );
+
+  screenshot(browserPath, htmlPath, pngPath, 1380, 900);
+  frameManifest.frames.push({ path: pngPath, duration: frame.duration });
+}
+
+copyFileSync(join(framesDir, "frame-5.png"), terminalPng);
+screenshot(browserPath, resultHtml, resultPng, 980, 760);
+writeFileSync(manifestPath, JSON.stringify(frameManifest, null, 2), "utf-8");
+
+run("python", [join(scriptDir, "build-demo-gif.py"), manifestPath]);
+
+function buildTerminalPreviewHtml({ headline, rows, showScores, showSaved }) {
   const winner = demoResults[0];
-  const rows = demoStates
+
+  const rowMarkup = rows
     .map((state) => {
       const isWinner = state.name === winner.name;
       const statusColor =
@@ -122,14 +211,16 @@ function buildTerminalPreviewHtml() {
           ? "#4ade80"
           : state.status === "failed"
             ? "#fb7185"
-            : "#38bdf8";
+            : state.status === "streaming"
+              ? "#38bdf8"
+              : "#64748b";
 
       return `
-        <div class="row ${isWinner ? "winner" : ""}">
-          <div class="cell model">${isWinner ? "★ " : ""}${escapeHtml(state.name)}</div>
+        <div class="row ${isWinner && state.status !== "waiting" ? "winner" : ""}">
+          <div class="cell model">${isWinner && state.status !== "waiting" ? "★ " : ""}${escapeHtml(state.name)}</div>
           <div class="cell status" style="color:${statusColor}">${escapeHtml(state.status)}</div>
           <div class="cell tokens">${state.tokensReceived > 0 ? state.tokensReceived : "-"}</div>
-          <div class="cell time">${formatTime(state.elapsedMs)}</div>
+          <div class="cell time">${state.elapsedMs > 0 ? formatTime(state.elapsedMs) : "-"}</div>
           <div class="cell cost">${state.costUsd > 0 ? formatCost(state.costUsd) : "-"}</div>
           <div class="cell error">${state.error ? escapeHtml(state.error) : ""}</div>
         </div>
@@ -159,20 +250,23 @@ function buildTerminalPreviewHtml() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LLM Bench Terminal Preview</title>
   <style>
-    body {
+    html, body {
+      width: 100%;
+      height: 100%;
       margin: 0;
       background: radial-gradient(circle at top, #15233b 0%, #090f1c 55%, #050911 100%);
+      overflow: hidden;
+    }
+    body {
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
       color: #e2e8f0;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      padding: 40px;
       box-sizing: border-box;
     }
     .window {
-      width: 1280px;
+      width: 1260px;
       border-radius: 22px;
       overflow: hidden;
       background: #0b1220;
@@ -210,15 +304,15 @@ function buildTerminalPreviewHtml() {
       margin-bottom: 12px;
       font-family: "Segoe UI", Arial, sans-serif;
     }
-    .hero .brand {
+    .brand {
       font-size: 34px;
       font-weight: 800;
       color: #f8fafc;
     }
-    .hero .state {
+    .state {
       font-size: 28px;
       font-weight: 700;
-      color: #38bdf8;
+      color: ${headline === "Race complete" ? "#38bdf8" : "#38bdf8"};
     }
     .prompt {
       color: #94a3b8;
@@ -248,6 +342,7 @@ function buildTerminalPreviewHtml() {
     .row {
       border-top: 1px solid #132033;
       font-size: 22px;
+      min-height: 58px;
     }
     .row.winner {
       background: rgba(20, 83, 45, 0.45);
@@ -261,12 +356,28 @@ function buildTerminalPreviewHtml() {
       font-size: 17px;
       text-align: right;
     }
+    .winner-callout {
+      margin-top: 18px;
+      color: #4ade80;
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      min-height: 34px;
+      visibility: ${showScores ? "visible" : "hidden"};
+    }
+    .winner-callout span {
+      color: #94a3b8;
+      font-weight: 500;
+      font-size: 20px;
+    }
     .score-table {
       margin-top: 22px;
       border: 1px solid #1e293b;
       border-radius: 18px;
       overflow: hidden;
       background: #0a1324;
+      visibility: ${showScores ? "visible" : "hidden"};
+      min-height: 232px;
     }
     .score-header, .score-row {
       grid-template-columns: 80px 320px 120px 120px 120px 120px;
@@ -286,22 +397,12 @@ function buildTerminalPreviewHtml() {
       color: #4ade80;
       font-weight: 800;
     }
-    .winner-callout {
-      margin-top: 18px;
-      color: #4ade80;
-      font-family: "Segoe UI", Arial, sans-serif;
-      font-size: 24px;
-      font-weight: 800;
-    }
-    .winner-callout span {
-      color: #94a3b8;
-      font-weight: 500;
-      font-size: 20px;
-    }
     .saved {
       margin-top: 10px;
       color: #64748b;
       font-size: 17px;
+      min-height: 24px;
+      visibility: ${showSaved ? "visible" : "hidden"};
     }
   </style>
 </head>
@@ -316,7 +417,7 @@ function buildTerminalPreviewHtml() {
     <div class="content">
       <div class="hero">
         <div class="brand">LLM Bench</div>
-        <div class="state">Race complete</div>
+        <div class="state">${escapeHtml(headline)}</div>
       </div>
       <div class="prompt">Prompt: ${escapeHtml(demoPrompt)}</div>
 
@@ -329,7 +430,7 @@ function buildTerminalPreviewHtml() {
           <div>Cost</div>
           <div></div>
         </div>
-        ${rows}
+        ${rowMarkup}
       </div>
 
       <div class="winner-callout">

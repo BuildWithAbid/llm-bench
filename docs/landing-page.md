@@ -12,7 +12,7 @@ Compare GPT-4o, Claude, Gemini, and Llama side by side from your terminal.
 
 ### Live terminal benchmark
 
-![LLM Bench terminal race preview](./assets/terminal-race-preview.png)
+![LLM Bench terminal race demo](./assets/terminal-race-demo.gif)
 
 ### Shareable result card
 

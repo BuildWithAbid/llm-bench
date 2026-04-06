@@ -8,7 +8,7 @@ If you need a lightweight way to compare OpenAI, Anthropic, Gemini, and Groq mod
 
 ### Live terminal race
 
-![LLM Bench terminal benchmark preview](./docs/assets/terminal-race-preview.png)
+![LLM Bench terminal benchmark demo](./docs/assets/terminal-race-demo.gif)
 
 ### Shareable result card
 
@@ -393,6 +393,8 @@ npm test
 ```bash
 npm run docs:assets
 ```
+
+This asset script expects a local Chrome or Edge installation plus Python with Pillow available.
 
 Current automated tests cover:
 
