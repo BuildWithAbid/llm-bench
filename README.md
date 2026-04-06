@@ -4,6 +4,16 @@
 
 If you need a lightweight way to compare OpenAI, Anthropic, Gemini, and Groq models for latency, price, and response quality, this project is built for that workflow.
 
+## Product Preview
+
+### Live terminal race
+
+![LLM Bench terminal benchmark preview](./docs/assets/terminal-race-preview.svg)
+
+### Shareable result card
+
+![LLM Bench result card preview](./docs/assets/result-card-preview.svg)
+
 ## What This Product Actually Does
 
 At runtime, `llm-bench`:
@@ -422,6 +432,7 @@ To keep expectations aligned with the current implementation:
 ## Documentation Index
 
 - [README](./README.md)
+- [Landing Page Docs](./docs/landing-page.md)
 - [CLI Reference](./docs/cli-reference.md)
 - [Architecture Guide](./docs/architecture.md)
 
