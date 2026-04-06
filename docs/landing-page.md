@@ -12,11 +12,11 @@ Compare GPT-4o, Claude, Gemini, and Llama side by side from your terminal.
 
 ### Live terminal benchmark
 
-![LLM Bench terminal race preview](./assets/terminal-race-preview.svg)
+![LLM Bench terminal race preview](./assets/terminal-race-preview.png)
 
 ### Shareable result card
 
-![LLM Bench result card preview](./assets/result-card-preview.svg)
+![LLM Bench result card preview](./assets/result-card-preview.png)
 
 ## Why Teams Use llm-bench
 

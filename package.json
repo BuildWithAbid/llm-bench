@@ -10,6 +10,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.ts",
+    "docs:assets": "node docs/scripts/generate-preview-assets.mjs",
     "start": "node dist/cli.js",
     "test": "npm run build && node --test test/**/*.test.mjs"
   },

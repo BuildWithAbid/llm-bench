@@ -1,0 +1,75 @@
+export const demoPrompt = "Compare REST and GraphQL for mobile APIs";
+
+export const demoStates = [
+  {
+    name: "GPT-4o",
+    status: "done",
+    tokensReceived: 182,
+    elapsedMs: 1800,
+    costUsd: 0.0034,
+  },
+  {
+    name: "Claude Sonnet 4.6",
+    status: "done",
+    tokensReceived: 245,
+    elapsedMs: 2700,
+    costUsd: 0.0068,
+  },
+  {
+    name: "Gemini 2.5 Flash",
+    status: "done",
+    tokensReceived: 210,
+    elapsedMs: 1200,
+    costUsd: 0.0004,
+  },
+  {
+    name: "Llama 3.3-70b",
+    status: "failed",
+    tokensReceived: 0,
+    elapsedMs: 600,
+    costUsd: 0,
+    error: "provider timeout during demo run",
+  },
+];
+
+export const demoResults = [
+  {
+    name: "Gemini 2.5 Flash",
+    model: "gemini-2.5-flash",
+    elapsedMs: 1200,
+    costUsd: 0.0004,
+    inputTokens: 31,
+    outputTokens: 53,
+    text: "REST is usually the safer default for mobile teams because caching, retries, and observability are straightforward. GraphQL becomes attractive when the app has many surfaces and each one needs a different data shape. A common pattern is REST for stable core flows and GraphQL for high-variation screens.",
+    speedScore: 10,
+    costScore: 10,
+    qualityScore: 8.1,
+    overallScore: 9.24,
+  },
+  {
+    name: "GPT-4o",
+    model: "gpt-4o",
+    elapsedMs: 1800,
+    costUsd: 0.0034,
+    inputTokens: 32,
+    outputTokens: 55,
+    text: "REST gives mobile apps predictable endpoints and caching behavior. GraphQL reduces over-fetching when screens need mixed data from many resources. For most teams, use REST for operational simplicity and GraphQL when client-specific data composition is the main bottleneck.",
+    speedScore: 6.67,
+    costScore: 1.18,
+    qualityScore: 8.4,
+    overallScore: 5.98,
+  },
+  {
+    name: "Claude Sonnet 4.6",
+    model: "claude-sonnet-4-6",
+    elapsedMs: 2700,
+    costUsd: 0.0068,
+    inputTokens: 34,
+    outputTokens: 61,
+    text: "REST is easier to debug, cache, and operate across standard mobile API stacks. GraphQL is strongest when many screens need different field subsets and backend orchestration is expensive. Choose based on operational maturity, schema governance, and how often the client shape changes.",
+    speedScore: 4.44,
+    costScore: 0.59,
+    qualityScore: 8.7,
+    overallScore: 5.96,
+  },
+];
