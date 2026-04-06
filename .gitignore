@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.claude/
+.env
+*.log
+result-card.txt
+result-card.html
+tmp-result.txt
+tmp-result.html
